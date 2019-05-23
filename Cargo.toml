@@ -1,0 +1,12 @@
+[package]
+name = "gctu"
+version = "0.1.0"
+authors = ["Malte Schwarzkopf <malte@csail.mit.edu>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.25.0"
+csv = "1"
+hdrhistogram = "6"
+serde = "1"
+serde_derive = "1"
