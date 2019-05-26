@@ -18,7 +18,7 @@
 // 18,sample portion,FLOAT,NO
 // 19,aggregation type,BOOLEAN,NO
 // 20,sampled CPU usage,FLOAT,NO
-#[derive(Debug,Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct TaskUsageRecord {
     pub start_time: u64,
     pub end_time: u64,
@@ -39,12 +39,12 @@ pub struct TaskUsageRecord {
     pub mapi: Option<f64>,
     pub sample_portion: Option<f64>,
     pub agg_type: Option<u8>, // bool
-    pub sampled_cpu_usage: Option<f64>
+    pub sampled_cpu_usage: Option<f64>,
 }
 
 pub fn for_each_in_file<F>(file: &str, mut f: F) -> std::io::Result<()>
 where
-    F: FnMut(TaskUsageRecord) -> std::io::Result<()>
+    F: FnMut(TaskUsageRecord) -> std::io::Result<()>,
 {
     use std::fs::File;
 
@@ -59,4 +59,3 @@ where
     }
     Ok(())
 }
-
