@@ -3,4 +3,5 @@ extern crate csv;
 extern crate serde_derive;
 
 pub mod machine_events;
+pub mod machine_attributes;
 pub mod task_usage;
