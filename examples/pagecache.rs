@@ -86,33 +86,33 @@ fn main() -> std::io::Result<()> {
             return Ok(());
         }
 
-        let mem_frac = active_machines
-            .get(&task_usage.machine_id)
-            .expect(&format!("Machine {} does not exist", task_usage.machine_id));
-
-        if let Some(cmu) = task_usage.canonical_mem_usage {
-            let cmu = cmu / mem_frac;
-            canon
-                .record((cmu * 10000.0) as u64)
-                .expect("recording to histogram failed");
-        }
-        if let Some(amu) = task_usage.assigned_mem_usage {
-            let amu = amu / mem_frac;
-            assigned
-                .record((amu * 10000.0) as u64)
-                .expect("recording to histogram failed");
-        }
-        if let Some(upc) = task_usage.unmapped_page_cache {
-            let upc = upc / mem_frac;
-            unmapped_pc
-                .record((upc * 10000.0) as u64)
-                .expect("recording to histogram failed");
-        }
-        if let Some(tpc) = task_usage.total_page_cache {
-            let tpc = tpc / mem_frac;
-            total_pc
-                .record((tpc * 10000.0) as u64)
-                .expect("recording to histogram failed");
+        if let Some(mem_frac) = active_machines.get(&task_usage.machine_id) {
+            if let Some(cmu) = task_usage.canonical_mem_usage {
+                let cmu = cmu / mem_frac;
+                canon
+                    .record((cmu * 10000.0) as u64)
+                    .expect("recording to histogram failed");
+            }
+            if let Some(amu) = task_usage.assigned_mem_usage {
+                let amu = amu / mem_frac;
+                assigned
+                    .record((amu * 10000.0) as u64)
+                    .expect("recording to histogram failed");
+            }
+            if let Some(upc) = task_usage.unmapped_page_cache {
+                let upc = upc / mem_frac;
+                unmapped_pc
+                    .record((upc * 10000.0) as u64)
+                    .expect("recording to histogram failed");
+            }
+            if let Some(tpc) = task_usage.total_page_cache {
+                let tpc = tpc / mem_frac;
+                total_pc
+                    .record((tpc * 10000.0) as u64)
+                    .expect("recording to histogram failed");
+            }
+        } else {
+            println!("Machine {} does not exist", task_usage.machine_id);
         }
 
         Ok(())
