@@ -61,7 +61,7 @@ fn main() -> std::io::Result<()> {
 
     let mut active_machines = HashMap::new();
 
-    let mf = format!("{}/machine_events/part-00000-of-00500.csv", trace_path);
+    let mf = format!("{}/machine_events/part-00000-of-00001.csv", trace_path);
     machine_events::for_each_in_file(&mf, |machine_event: MachineEvent| -> std::io::Result<()> {
         if initial_only && machine_event.time > TRACE_START_TIME {
             // XXX(malte): return and indication to stop iterating
