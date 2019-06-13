@@ -5,7 +5,7 @@ use gctu::task_usage::{self, TaskUsageRecord};
 use hdrhistogram::Histogram;
 use std::collections::HashMap;
 
-static TRACE_START_TIME: u64 = 0u64;
+static TRACE_START_TIME: u64 = 600_000_000u64;
 
 fn print(label: &str, hist: &hdrhistogram::Histogram<u64>) {
     println!("\n# {} samples: {}", label, hist.len());
