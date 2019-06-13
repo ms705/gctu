@@ -68,7 +68,7 @@ fn main() -> std::io::Result<()> {
             return Ok(());
         }
 
-        if machine_event.event_type == 1u8 {
+        if machine_event.event_type == 0u8 {
             if let Some(mf) = machine_event.memory {
                 active_machines.insert(machine_event.machine_id, mf);
             }
