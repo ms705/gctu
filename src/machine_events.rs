@@ -8,11 +8,32 @@
 pub struct MachineEvent {
     pub time: u64,
     pub machine_id: u64,
-    pub event_type: u8,
+    pub event_type: MachineEventType,
     pub platform_id: Option<String>,
     pub cpus: Option<f64>,
     pub memory: Option<f64>,
 }
+
+#[derive(Debug, Deserialize, PartialEq)]
+pub enum MachineEventType {
+    /// ADD (0): a machine became available to the cluster
+    Add,
+    /// REMOVE (1): a machine was removed from the cluster
+    Remove,
+    /// UPDATE (2): a machine available to the cluster had its available resources changed
+    Update,
+}
+
+// pub fn for_each<F>(trace_path: &str, mut f: F) -> std::io::Result<()>
+// where
+//     F: FnMut(MachineEvent) -> std::io::Result<()>,
+// {
+//     for i in 0..499 {
+//         let tf = format!("{}/machine_events/part-{:05}-of-00500.csv", trace_path, i);
+//         for_each_in_file(&tf, f)?
+//     }
+//     Ok(())
+// }
 
 pub fn for_each_in_file<F>(file: &str, mut f: F) -> std::io::Result<()>
 where

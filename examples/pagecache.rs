@@ -1,6 +1,6 @@
 extern crate gctu;
 
-use gctu::machine_events::{self, MachineEvent};
+use gctu::machine_events::{self, MachineEvent, MachineEventType};
 use gctu::task_usage::{self, TaskUsageRecord};
 use hdrhistogram::Histogram;
 use std::collections::HashMap;
@@ -68,7 +68,7 @@ fn main() -> std::io::Result<()> {
             return Ok(());
         }
 
-        if machine_event.event_type == 0u8 {
+        if machine_event.event_type == MachineEventType::Add {
             if let Some(mf) = machine_event.memory {
                 active_machines.insert(machine_event.machine_id, mf);
             }
