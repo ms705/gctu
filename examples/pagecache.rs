@@ -78,6 +78,8 @@ fn main() -> std::io::Result<()> {
     })
     .expect("failed to process machine events");
 
+    let mut pcache_by_machine = HashMap::new();
+
     let f = format!("{}/task_usage/part-00000-of-00500.csv", trace_path);
 
     task_usage::for_each_in_file(&f, |task_usage: TaskUsageRecord| -> std::io::Result<()> {
@@ -110,6 +112,10 @@ fn main() -> std::io::Result<()> {
                 total_pc
                     .record((tpc * 10000.0) as u64)
                     .expect("recording to histogram failed");
+                let tpc_on_machine = pcache_by_machine
+                    .entry(task_usage.machine_id)
+                    .or_insert(0.0);
+                *tpc_on_machine += tpc;
             }
         } else {
             println!("Machine {} does not exist", task_usage.machine_id);
@@ -123,6 +129,11 @@ fn main() -> std::io::Result<()> {
     print("assigned mem usage", &assigned);
     print("unmapped page cache", &unmapped_pc);
     print("total page cache", &total_pc);
+
+    println!("pcache use on machines:");
+    for (m, tpc) in pcache_by_machine {
+        println!("{}: {}", m, tpc);
+    }
 
     Ok(())
 }
