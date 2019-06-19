@@ -24,6 +24,20 @@ pub enum MachineEventType {
     Update,
 }
 
+impl Into<MachineEventType> for &str {
+    fn into(self) -> MachineEventType {
+        if self == "0" {
+            MachineEventType::Add
+        } else if self == "1" {
+            MachineEventType::Remove
+        } else if self == "2" {
+            MachineEventType::Update
+        } else {
+            unreachable!()
+        }
+    }
+}
+
 // pub fn for_each<F>(trace_path: &str, mut f: F) -> std::io::Result<()>
 // where
 //     F: FnMut(MachineEvent) -> std::io::Result<()>,
