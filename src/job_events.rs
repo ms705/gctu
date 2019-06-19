@@ -1,3 +1,5 @@
+use crate::common::{MissingInfo, SchedulingClass};
+
 // 1,time,INTEGER,YES
 // 2,missing info,INTEGER,NO
 // 3,job ID,INTEGER,YES
@@ -13,7 +15,7 @@ pub struct JobEvent {
     pub job_id: u64,
     pub event_type: JobEventType,
     pub user: Option<String>,
-    pub scheduling_class: Option<u8>,
+    pub scheduling_class: Option<SchedulingClass>,
     pub job_name: Option<String>,
     pub logical_job_name: Option<String>,
 }
@@ -48,37 +50,6 @@ pub enum JobEventType {
     /// UPDATE_RUNNING(8): A task or job’s scheduling class, resource requirements, or constraints
     /// were updated while it was scheduled.
     UpdateRunning,
-}
-
-#[derive(Debug, Deserialize)]
-pub enum MissingInfo {
-    /// (0): "we did not find a record representing the given event, but a later snapshot of the job
-    /// or task state indicated that the transition must have occurred. The timestamp of the
-    /// synthesized event is the timestamp of the snapshot."
-    SnapshotButNoTransition,
-    /// (1): "we did not find a record representing the given termination event, but the job or task
-    /// disappeared from later snapshots of cluster states, so it must have been terminated. The
-    /// timestamp of the synthesized event is a pessimistic upper bound on its actual termination
-    /// time assuming it could have legitimately been missing from one snapshot."
-    NoSnapshotOrTransition,
-    /// (2): "we did not find a record representing the creation of the given task or job. In this
-    /// case, we may be missing metadata (job name, resource requests, etc.) about the job or task
-    /// and we may have placed SCHEDULE or SUBMIT events latter than they actually are."
-    ExistsButNoCreation,
-}
-
-impl Into<MissingInfo> for &str {
-    fn into(self) -> MissingInfo {
-        if self == "0" {
-            MissingInfo::SnapshotButNoTransition
-        } else if self == "1" {
-            MissingInfo::NoSnapshotOrTransition
-        } else if self == "2" {
-            MissingInfo::ExistsButNoCreation
-        } else {
-            unreachable!()
-        }
-    }
 }
 
 pub fn for_each_in_file<F>(file: &str, mut f: F) -> std::io::Result<()>
