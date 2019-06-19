@@ -1,6 +1,8 @@
 extern crate csv;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate serde_repr;
 
 pub mod common;
 pub mod job_events;

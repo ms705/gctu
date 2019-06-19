@@ -20,36 +20,37 @@ pub struct JobEvent {
     pub logical_job_name: Option<String>,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize_repr, PartialEq)]
+#[repr(u8)]
 pub enum JobEventType {
     /// SUBMIT (0): A task or job became eligible for scheduling.
-    Submit,
+    Submit = 0,
     /// SCHEDULE (1): A job or task was scheduled on a machine. (It may not start running
     /// immediately due to code-shipping time, etc.) For jobs, this occurs the first time any task
     /// of the job is scheduled on a machine.
-    Schedule,
+    Schedule = 1,
     /// EVICT(2): A task or job was descheduled because of a higher priority task or job, because
     /// the scheduler overcommitted and the actual demand exceeded the machine capacity, because
     /// the machine on which it was running became unusable (e.g. taken offline for repairs), or
     /// because a disk holding the task’s data was lost.
-    Evict,
+    Evict = 2,
     /// FAIL(3): A task or job was descheduled (or, in rare cases, ceased to be eligible for
     /// scheduling while it was pending) due to a task failure.
-    Fail,
+    Fail = 3,
     /// FINISH(4): A task or job completed normally.
-    Finish,
+    Finish = 4,
     /// KILL(5): A task or job was cancelled by the user or a driver program or because another job
     /// or task on which this job was dependent died.
-    Kill,
+    Kill = 5,
     /// LOST(6): A task or job was presumably terminated, but a record indicating its termination
     /// was missing from our source data.
-    Lost,
+    Lost = 6,
     /// UPDATE_PENDING(7): A task or job’s scheduling class, resource requirements, or constraints
     /// were updated while it was waiting to be scheduled.
-    UpdatePending,
+    UpdatePending = 7,
     /// UPDATE_RUNNING(8): A task or job’s scheduling class, resource requirements, or constraints
     /// were updated while it was scheduled.
-    UpdateRunning,
+    UpdateRunning = 8,
 }
 
 pub fn for_each_in_file<F>(file: &str, mut f: F) -> std::io::Result<()>

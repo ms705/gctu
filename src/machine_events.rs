@@ -14,14 +14,15 @@ pub struct MachineEvent {
     pub memory: Option<f64>,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize_repr, PartialEq)]
+#[repr(u8)]
 pub enum MachineEventType {
     /// ADD (0): a machine became available to the cluster
-    Add,
+    Add = 0,
     /// REMOVE (1): a machine was removed from the cluster
-    Remove,
+    Remove = 1,
     /// UPDATE (2): a machine available to the cluster had its available resources changed
-    Update,
+    Update = 2,
 }
 
 impl Into<MachineEventType> for &str {
