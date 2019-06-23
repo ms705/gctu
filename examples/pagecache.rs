@@ -1,5 +1,7 @@
 extern crate gctu;
 
+use gctu::common;
+use gctu::job_events::{self, JobEvent};
 use gctu::machine_events::{self, MachineEvent, MachineEventType};
 use gctu::task_usage::{self, TaskUsageRecord};
 use hdrhistogram::Histogram;
@@ -59,7 +61,23 @@ fn main() -> std::io::Result<()> {
     let mut unmapped_pc = Histogram::<u64>::new_with_bounds(1, 10000, 2).unwrap();
     let mut total_pc = Histogram::<u64>::new_with_bounds(1, 10000, 2).unwrap();
 
+    let mut active_jobs = HashMap::new();
     let mut active_machines = HashMap::new();
+
+    let mf = format!("{}/job_events/part-00000-of-00500.csv", trace_path);
+    job_events::for_each_in_file(&mf, |job_event: JobEvent| -> std::io::Result<()> {
+        if initial_only && job_event.time > TRACE_START_TIME {
+            // XXX(malte): return and indication to stop iterating
+            return Ok(());
+        }
+
+        if job_event.event_type == 0u8 {
+            active_jobs.insert(job_event.job_id, job_event);
+        }
+
+        Ok(())
+    })
+    .expect("failed to process machine events");
 
     let mf = format!("{}/machine_events/part-00000-of-00001.csv", trace_path);
     machine_events::for_each_in_file(&mf, |machine_event: MachineEvent| -> std::io::Result<()> {
@@ -79,6 +97,7 @@ fn main() -> std::io::Result<()> {
     .expect("failed to process machine events");
 
     let mut pcache_by_machine = HashMap::new();
+    let mut pcache_by_job = HashMap::new();
 
     let f = format!("{}/task_usage/part-00000-of-00500.csv", trace_path);
 
@@ -116,9 +135,17 @@ fn main() -> std::io::Result<()> {
                     .entry(task_usage.machine_id)
                     .or_insert(0.0);
                 *tpc_on_machine += tpc;
+                let (tasks, job_tpc) = pcache_by_job
+                    .entry(task_usage.job_id)
+                    .or_insert((0, Vec::new()));
+                *tasks += 1;
+                job_tpc.push(tpc);
             }
         } else {
-            println!("Machine {} does not exist", task_usage.machine_id);
+            eprintln!(
+                "task {}'s machine {} does not exist",
+                task_usage.task_id, task_usage.machine_id
+            );
         }
 
         Ok(())
@@ -130,9 +157,19 @@ fn main() -> std::io::Result<()> {
     print("unmapped page cache", &unmapped_pc);
     print("total page cache", &total_pc);
 
-    println!("pcache use on machines:");
-    for (m, tpc) in pcache_by_machine {
-        println!("{}: {}", m, tpc);
+    println!("\n\npage cache use by job:");
+    println!("job ID, scheduling class, number of tasks, avg. page cache use");
+    for (j, (tasks, tpc)) in pcache_by_job {
+        let sum: f64 = tpc.iter().sum();
+        if let Some(j) = active_jobs.get(&j) {
+            let class = j
+                .scheduling_class
+                .as_ref()
+                .unwrap_or(&common::SchedulingClass::Unknown);
+            println!("{},{:?},{},{}", j.job_id, class, tasks, sum / tasks as f64);
+        } else {
+            eprintln!("skipping unknown job {}", j);
+        }
     }
 
     Ok(())
