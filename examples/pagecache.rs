@@ -1,7 +1,7 @@
 extern crate gctu;
 
 use gctu::common::{self, TRACE_START_TIME};
-use gctu::job_events::{self, JobEvent};
+use gctu::job_events::{self, JobEvent, JobEventType};
 use gctu::machine_events::{self, MachineEvent, MachineEventType};
 use gctu::task_usage::{self, TaskUsageRecord};
 use hdrhistogram::Histogram;
@@ -69,7 +69,7 @@ fn main() -> std::io::Result<()> {
             return Ok(());
         }
 
-        if job_event.event_type == 0u8 {
+        if job_event.event_type == JobEventType::Submit {
             active_jobs.insert(job_event.job_id, job_event);
         }
 
@@ -141,8 +141,8 @@ fn main() -> std::io::Result<()> {
             }
         } else {
             eprintln!(
-                "task {}'s machine {} does not exist",
-                task_usage.task_id, task_usage.machine_id
+                "task {}:{}'s machine {} does not exist",
+                task_usage.job_id, task_usage.task_index, task_usage.machine_id
             );
         }
 
