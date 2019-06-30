@@ -1,3 +1,5 @@
+pub static TRACE_START_TIME: u64 = 600_000_000u64;
+
 #[derive(Debug, Deserialize_repr)]
 #[repr(u8)]
 pub enum MissingInfo {

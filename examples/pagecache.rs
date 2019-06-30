@@ -1,13 +1,11 @@
 extern crate gctu;
 
-use gctu::common;
+use gctu::common::{self, TRACE_START_TIME};
 use gctu::job_events::{self, JobEvent};
 use gctu::machine_events::{self, MachineEvent, MachineEventType};
 use gctu::task_usage::{self, TaskUsageRecord};
 use hdrhistogram::Histogram;
 use std::collections::HashMap;
-
-static TRACE_START_TIME: u64 = 600_000_000u64;
 
 fn print(label: &str, hist: &hdrhistogram::Histogram<u64>) {
     println!("\n# {} samples: {}", label, hist.len());
