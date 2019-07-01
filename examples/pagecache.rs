@@ -54,6 +54,10 @@ fn main() -> std::io::Result<()> {
     let trace_path = args.value_of("trace-path").unwrap();
     let initial_only = args.is_present("initial-state-only");
 
+    if !initial_only {
+        unimplemented!("processing beyond the initial state is not currently supported");
+    }
+
     let mut canon = Histogram::<u64>::new_with_bounds(1, 10000, 2).unwrap();
     let mut assigned = Histogram::<u64>::new_with_bounds(1, 10000, 2).unwrap();
     let mut unmapped_pc = Histogram::<u64>::new_with_bounds(1, 10000, 2).unwrap();
