@@ -101,8 +101,7 @@ fn main() -> std::io::Result<()> {
     let mut pcache_by_machine = HashMap::new();
     let mut pcache_by_job = HashMap::new();
 
-    let f = format!("{}/task_usage/part-00000-of-00500.csv", trace_path);
-    let usage_iter = TaskUsageIterator::new(&f);
+    let usage_iter = TaskUsageIterator::new(trace_path);
 
     for rec in usage_iter {
         let task_usage = rec.as_ref().expect("failed to parse task record!");
