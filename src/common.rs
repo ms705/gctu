@@ -1,4 +1,4 @@
-pub static TRACE_START_TIME: u64 = 600_000_000u64;
+pub static TRACE_START_TIME: u64 = 600_000_000;
 
 #[derive(Debug, Deserialize_repr)]
 #[repr(u8)]
