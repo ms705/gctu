@@ -1,3 +1,8 @@
+use crate::common;
+use crate::iter::TraceFileIterator;
+
+pub(crate) static TASK_USAGE_FILE_COUNT: usize = 500;
+
 // 1,start time,INTEGER,YES
 // 2,end time,INTEGER,YES
 // 3,job ID,INTEGER,YES
@@ -40,6 +45,27 @@ pub struct TaskUsageRecord {
     pub sample_portion: Option<f64>,
     pub agg_type: Option<u8>, // bool
     pub sampled_cpu_usage: Option<f64>,
+}
+
+pub struct TaskUsageIterator {
+    file_iter: TraceFileIterator<TaskUsageRecord>,
+}
+
+impl TaskUsageIterator {
+    pub fn new(trace_path: &str) -> Self {
+        let fp = format!("{}/task_usage/", trace_path);
+        TaskUsageIterator {
+            file_iter: TraceFileIterator::new(&fp, TASK_USAGE_FILE_COUNT),
+        }
+    }
+}
+
+impl Iterator for TaskUsageIterator {
+    type Item = Result<TaskUsageRecord, csv::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.file_iter.next()
+    }
 }
 
 pub fn for_each_in_file<F>(file: &str, mut f: F) -> std::io::Result<()>

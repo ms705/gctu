@@ -5,6 +5,7 @@ extern crate serde_derive;
 extern crate serde_repr;
 
 pub mod common;
+pub mod iter;
 pub mod job_events;
 pub mod machine_attributes;
 pub mod machine_events;
