@@ -3,7 +3,7 @@ extern crate gctu;
 use gctu::common::{self, TRACE_START_TIME};
 use gctu::job_events::{self, JobEvent, JobEventType};
 use gctu::machine_events::{self, MachineEvent, MachineEventType};
-use gctu::task_usage::{self, TaskUsageRecord};
+use gctu::task_usage::{TaskUsageIterator, TaskUsageRecord};
 use hdrhistogram::Histogram;
 use std::collections::HashMap;
 
@@ -102,57 +102,61 @@ fn main() -> std::io::Result<()> {
     let mut pcache_by_job = HashMap::new();
 
     let f = format!("{}/task_usage/part-00000-of-00500.csv", trace_path);
+    let usage_iter = TaskUsageIterator::new(&f);
 
-    task_usage::for_each_in_file(&f, |task_usage: TaskUsageRecord| -> std::io::Result<()> {
-        if initial_only && task_usage.start_time > TRACE_START_TIME {
-            // XXX(malte): return an indication to stop iterating
-            return Ok(());
-        }
+    let num_tasks = usage_iter
+        .take_while(|rec| {
+            let task_usage = rec.as_ref().expect("failed to parse task record!");
+            // stop iterating once we're no longer interested
+            initial_only && task_usage.start_time > TRACE_START_TIME
+        })
+        .map(|rec| {
+            let task_usage: TaskUsageRecord = rec.expect("failed to parse task record!");
 
-        if let Some(mem_frac) = active_machines.get(&task_usage.machine_id) {
-            if let Some(cmu) = task_usage.canonical_mem_usage {
-                let cmu = cmu / mem_frac;
-                canon
-                    .record((cmu * 10000.0) as u64)
-                    .expect("recording to histogram failed");
+            if let Some(mem_frac) = active_machines.get(&task_usage.machine_id) {
+                if let Some(cmu) = task_usage.canonical_mem_usage {
+                    let cmu = cmu / mem_frac;
+                    canon
+                        .record((cmu * 10000.0) as u64)
+                        .expect("recording to histogram failed");
+                }
+                if let Some(amu) = task_usage.assigned_mem_usage {
+                    let amu = amu / mem_frac;
+                    assigned
+                        .record((amu * 10000.0) as u64)
+                        .expect("recording to histogram failed");
+                }
+                if let Some(upc) = task_usage.unmapped_page_cache {
+                    let upc = upc / mem_frac;
+                    unmapped_pc
+                        .record((upc * 10000.0) as u64)
+                        .expect("recording to histogram failed");
+                }
+                if let Some(tpc) = task_usage.total_page_cache {
+                    let tpc = tpc / mem_frac;
+                    total_pc
+                        .record((tpc * 10000.0) as u64)
+                        .expect("recording to histogram failed");
+                    let tpc_on_machine = pcache_by_machine
+                        .entry(task_usage.machine_id)
+                        .or_insert(0.0);
+                    *tpc_on_machine += tpc;
+                    let (tasks, job_tpc) = pcache_by_job
+                        .entry(task_usage.job_id)
+                        .or_insert((0, Vec::new()));
+                    *tasks += 1;
+                    job_tpc.push(tpc);
+                }
+            } else {
+                eprintln!(
+                    "task {}:{}'s machine {} does not exist",
+                    task_usage.job_id, task_usage.task_index, task_usage.machine_id
+                );
             }
-            if let Some(amu) = task_usage.assigned_mem_usage {
-                let amu = amu / mem_frac;
-                assigned
-                    .record((amu * 10000.0) as u64)
-                    .expect("recording to histogram failed");
-            }
-            if let Some(upc) = task_usage.unmapped_page_cache {
-                let upc = upc / mem_frac;
-                unmapped_pc
-                    .record((upc * 10000.0) as u64)
-                    .expect("recording to histogram failed");
-            }
-            if let Some(tpc) = task_usage.total_page_cache {
-                let tpc = tpc / mem_frac;
-                total_pc
-                    .record((tpc * 10000.0) as u64)
-                    .expect("recording to histogram failed");
-                let tpc_on_machine = pcache_by_machine
-                    .entry(task_usage.machine_id)
-                    .or_insert(0.0);
-                *tpc_on_machine += tpc;
-                let (tasks, job_tpc) = pcache_by_job
-                    .entry(task_usage.job_id)
-                    .or_insert((0, Vec::new()));
-                *tasks += 1;
-                job_tpc.push(tpc);
-            }
-        } else {
-            eprintln!(
-                "task {}:{}'s machine {} does not exist",
-                task_usage.job_id, task_usage.task_index, task_usage.machine_id
-            );
-        }
+        })
+        .count();
 
-        Ok(())
-    })
-    .expect("failed to process task usage data");
+    println!("processed {} tasks\n", num_tasks);
 
     print("canon. mem usage", &canon);
     print("assigned mem usage", &assigned);
