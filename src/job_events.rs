@@ -1,4 +1,7 @@
 use crate::common::{MissingInfo, SchedulingClass};
+use crate::iter::TraceFileIterator;
+
+pub(crate) static JOB_EVENT_FILE_COUNT: usize = 500;
 
 // 1,time,INTEGER,YES
 // 2,missing info,INTEGER,NO
@@ -69,4 +72,25 @@ where
         f(job_event)?
     }
     Ok(())
+}
+
+pub struct JobEventIterator {
+    file_iter: TraceFileIterator<JobEvent>,
+}
+
+impl JobEventIterator {
+    pub fn new(trace_path: &str) -> Self {
+        let fp = format!("{}/job_events/", trace_path);
+        JobEventIterator {
+            file_iter: TraceFileIterator::new(&fp, JOB_EVENT_FILE_COUNT),
+        }
+    }
+}
+
+impl Iterator for JobEventIterator {
+    type Item = Result<JobEvent, csv::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.file_iter.next()
+    }
 }

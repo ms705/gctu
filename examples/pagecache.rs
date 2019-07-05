@@ -1,7 +1,7 @@
 extern crate gctu;
 
 use gctu::common::{self, TRACE_START_TIME};
-use gctu::job_events::{self, JobEvent, JobEventType};
+use gctu::job_events::{JobEventIterator, JobEventType};
 use gctu::machine_events::{self, MachineEvent, MachineEventType};
 use gctu::task_usage::TaskUsageIterator;
 use hdrhistogram::Histogram;
@@ -66,8 +66,10 @@ fn main() -> std::io::Result<()> {
     let mut active_jobs = HashMap::new();
     let mut active_machines = HashMap::new();
 
-    let mf = format!("{}/job_events/part-00000-of-00500.csv", trace_path);
-    job_events::for_each_in_file(&mf, |job_event: JobEvent| -> std::io::Result<()> {
+    let job_iter = JobEventIterator::new(trace_path);
+
+    for rec in job_iter {
+        let job_event = rec.expect("failed to parse job event!");
         if initial_only && job_event.time > TRACE_START_TIME {
             // XXX(malte): return and indication to stop iterating
             return Ok(());
@@ -76,10 +78,7 @@ fn main() -> std::io::Result<()> {
         if job_event.event_type == JobEventType::Submit {
             active_jobs.insert(job_event.job_id, job_event);
         }
-
-        Ok(())
-    })
-    .expect("failed to process machine events");
+    }
 
     let mf = format!("{}/machine_events/part-00000-of-00001.csv", trace_path);
     machine_events::for_each_in_file(&mf, |machine_event: MachineEvent| -> std::io::Result<()> {

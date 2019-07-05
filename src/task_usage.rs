@@ -1,4 +1,3 @@
-use crate::common;
 use crate::iter::TraceFileIterator;
 
 pub(crate) static TASK_USAGE_FILE_COUNT: usize = 500;
