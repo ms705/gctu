@@ -66,21 +66,3 @@ impl Iterator for TaskUsageIterator {
         self.file_iter.next()
     }
 }
-
-pub fn for_each_in_file<F>(file: &str, mut f: F) -> std::io::Result<()>
-where
-    F: FnMut(TaskUsageRecord) -> std::io::Result<()>,
-{
-    use std::fs::File;
-
-    let file = File::open(file)?;
-    let mut rdr = csv::Reader::from_reader(file);
-
-    for result in rdr.records() {
-        let sr = result?;
-        let task_usage: TaskUsageRecord = sr.deserialize(None)?;
-
-        f(task_usage)?
-    }
-    Ok(())
-}

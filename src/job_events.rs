@@ -56,24 +56,6 @@ pub enum JobEventType {
     UpdateRunning = 8,
 }
 
-pub fn for_each_in_file<F>(file: &str, mut f: F) -> std::io::Result<()>
-where
-    F: FnMut(JobEvent) -> std::io::Result<()>,
-{
-    use std::fs::File;
-
-    let file = File::open(file)?;
-    let mut rdr = csv::Reader::from_reader(file);
-
-    for result in rdr.records() {
-        let sr = result?;
-        let job_event: JobEvent = sr.deserialize(None)?;
-
-        f(job_event)?
-    }
-    Ok(())
-}
-
 pub struct JobEventIterator {
     file_iter: TraceFileIterator<JobEvent>,
 }
