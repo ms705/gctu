@@ -71,8 +71,7 @@ fn main() -> std::io::Result<()> {
     for rec in job_iter {
         let job_event = rec.expect("failed to parse job event!");
         if initial_only && job_event.time > TRACE_START_TIME {
-            // XXX(malte): return and indication to stop iterating
-            return Ok(());
+            break;
         }
 
         if job_event.event_type == JobEventType::Submit {
