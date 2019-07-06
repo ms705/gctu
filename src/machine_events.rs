@@ -1,3 +1,7 @@
+use crate::iter::TraceFileIterator;
+
+pub(crate) static MACHINE_EVENT_FILE_COUNT: usize = 1;
+
 // 1,time,INTEGER,YES
 // 2,machine ID,INTEGER,YES
 // 3,event type,INTEGER,YES
@@ -39,31 +43,23 @@ impl Into<MachineEventType> for &str {
     }
 }
 
-// pub fn for_each<F>(trace_path: &str, mut f: F) -> std::io::Result<()>
-// where
-//     F: FnMut(MachineEvent) -> std::io::Result<()>,
-// {
-//     for i in 0..499 {
-//         let tf = format!("{}/machine_events/part-{:05}-of-00500.csv", trace_path, i);
-//         for_each_in_file(&tf, f)?
-//     }
-//     Ok(())
-// }
+pub struct MachineEventIterator {
+    file_iter: TraceFileIterator<MachineEvent>,
+}
 
-pub fn for_each_in_file<F>(file: &str, mut f: F) -> std::io::Result<()>
-where
-    F: FnMut(MachineEvent) -> std::io::Result<()>,
-{
-    use std::fs::File;
-
-    let file = File::open(file)?;
-    let mut rdr = csv::Reader::from_reader(file);
-
-    for result in rdr.records() {
-        let sr = result?;
-        let machine_event: MachineEvent = sr.deserialize(None)?;
-
-        f(machine_event)?
+impl MachineEventIterator {
+    pub fn new(trace_path: &str) -> Self {
+        let fp = format!("{}/machine_events/", trace_path);
+        MachineEventIterator {
+            file_iter: TraceFileIterator::new(&fp, MACHINE_EVENT_FILE_COUNT),
+        }
     }
-    Ok(())
+}
+
+impl Iterator for MachineEventIterator {
+    type Item = Result<MachineEvent, csv::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.file_iter.next()
+    }
 }

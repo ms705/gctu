@@ -2,7 +2,7 @@ extern crate gctu;
 
 use gctu::common::{self, TRACE_START_TIME};
 use gctu::job_events::{JobEventIterator, JobEventType};
-use gctu::machine_events::{self, MachineEvent, MachineEventType};
+use gctu::machine_events::{MachineEventIterator, MachineEventType};
 use gctu::task_usage::TaskUsageIterator;
 use hdrhistogram::Histogram;
 use std::collections::HashMap;
@@ -79,11 +79,11 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    let mf = format!("{}/machine_events/part-00000-of-00001.csv", trace_path);
-    machine_events::for_each_in_file(&mf, |machine_event: MachineEvent| -> std::io::Result<()> {
+    let machine_event_iter = MachineEventIterator::new(trace_path);
+    for rec in machine_event_iter {
+        let machine_event = rec.expect("failed to parse machine event!");
         if initial_only && machine_event.time > TRACE_START_TIME {
-            // XXX(malte): return and indication to stop iterating
-            return Ok(());
+            break;
         }
 
         if machine_event.event_type == MachineEventType::Add {
@@ -91,10 +91,7 @@ fn main() -> std::io::Result<()> {
                 active_machines.insert(machine_event.machine_id, mf);
             }
         }
-
-        Ok(())
-    })
-    .expect("failed to process machine events");
+    }
 
     let mut pcache_by_machine = HashMap::new();
     let mut pcache_by_job = HashMap::new();
