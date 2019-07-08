@@ -1,4 +1,7 @@
 use crate::common::{MissingInfo, SchedulingClass};
+use crate::iter::TraceFileIterator;
+
+pub(crate) static TASK_EVENT_FILE_COUNT: usize = 500;
 
 // 1,time,INTEGER,YES
 // 2,missing info,INTEGER,NO
@@ -63,20 +66,23 @@ pub enum TaskEventType {
     UpdateRunning = 8,
 }
 
-pub fn for_each_in_file<F>(file: &str, mut f: F) -> std::io::Result<()>
-where
-    F: FnMut(TaskEvent) -> std::io::Result<()>,
-{
-    use std::fs::File;
+pub struct TaskEventIterator {
+    file_iter: TraceFileIterator<TaskEvent>,
+}
 
-    let file = File::open(file)?;
-    let mut rdr = csv::Reader::from_reader(file);
-
-    for result in rdr.records() {
-        let sr = result?;
-        let task_event: TaskEvent = sr.deserialize(None)?;
-
-        f(task_event)?
+impl TaskEventIterator {
+    pub fn new(trace_path: &str) -> Self {
+        let fp = format!("{}/task_events/", trace_path);
+        TaskEventIterator {
+            file_iter: TraceFileIterator::new(&fp, TASK_EVENT_FILE_COUNT),
+        }
     }
-    Ok(())
+}
+
+impl Iterator for TaskEventIterator {
+    type Item = Result<TaskEvent, csv::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.file_iter.next()
+    }
 }
